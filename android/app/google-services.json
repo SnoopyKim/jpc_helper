@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "244946853827",
+    "firebase_url": "https://databaseforweb-cfba4-default-rtdb.firebaseio.com",
+    "project_id": "databaseforweb-cfba4",
+    "storage_bucket": "databaseforweb-cfba4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244946853827:android:0e8bbd6490f39534e1a776",
+        "android_client_info": {
+          "package_name": "com.example.jpc_second"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "244946853827-moochhr4kkc40epaopf7aur8d5fvvv0b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtF06W8gWRG0nhyFp9TTs_g7k50rwp1T8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "244946853827-moochhr4kkc40epaopf7aur8d5fvvv0b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
