@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -15,7 +13,7 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   final String _adminPassword = 'ckwodnjs';
-  bool _isAdmin = true;
+  bool _isAdmin = false;
   String _input = '';
 
   login() {
@@ -25,7 +23,7 @@ class _AdminScreenState extends State<AdminScreen> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('비밀번호가 일치하지 않습니다.'),
+        content: const Text('비밀번호가 일치하지 않습니다.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.red.shade700,
         shape:
@@ -147,7 +145,7 @@ class EditContainerState extends State<EditContainer> {
   addPair() async {
     if (phoneOneTec.text.isEmpty || phoneTwoTec.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('두 번호는 필수로 입력해야 합니다.'),
+        content: const Text('두 번호는 필수로 입력해야 합니다.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.red.shade700,
         shape:
@@ -181,30 +179,30 @@ class EditContainerState extends State<EditContainer> {
             children: [
               TextField(
                 controller: phoneOneTec,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     labelText: '휴대폰번호1 *',
                     hintText: '',
-                    hintStyle: TextStyle(height: 2.0),
-                    contentPadding: EdgeInsets.all(10.0)),
+                    hintStyle: const TextStyle(height: 2.0),
+                    contentPadding: const EdgeInsets.all(10.0)),
               ),
               TextField(
                 controller: phoneTwoTec,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     labelText: '휴대폰번호2 *',
                     hintText: '',
-                    hintStyle: TextStyle(height: 2.0),
-                    contentPadding: EdgeInsets.all(10.0)),
+                    hintStyle: const TextStyle(height: 2.0),
+                    contentPadding: const EdgeInsets.all(10.0)),
               ),
               TextField(
                 controller: codeTec,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     labelText: '코드',
                     hintText: '',
-                    hintStyle: TextStyle(height: 2.0),
-                    contentPadding: EdgeInsets.all(10.0)),
+                    hintStyle: const TextStyle(height: 2.0),
+                    contentPadding: const EdgeInsets.all(10.0)),
               ),
               const SizedBox(height: 20.0),
-              ElevatedButton(onPressed: addPair, child: Text('추가하기')),
+              ElevatedButton(onPressed: addPair, child: const Text('추가하기')),
             ],
           ),
         ),
@@ -257,7 +255,7 @@ class _PairItemState extends State<_PairItem> {
         .ref('jpc/second/present/${widget.pair['key']}')
         .update({'code': inputText});
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('코드가 수정되었습니다'),
+      content: const Text('코드가 수정되었습니다'),
       behavior: SnackBarBehavior.floating,
       backgroundColor: Theme.of(context).primaryColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -269,7 +267,7 @@ class _PairItemState extends State<_PairItem> {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              content: Text('삭제하시겠습니까?'),
+              content: const Text('삭제하시겠습니까?'),
               actions: [
                 TextButton(
                     onPressed: () {
@@ -278,10 +276,10 @@ class _PairItemState extends State<_PairItem> {
                           .remove();
                       Navigator.of(context).pop();
                     },
-                    child: Text('네')),
+                    child: const Text('네')),
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text('아니오'))
+                    child: const Text('아니오'))
               ],
             ));
   }
@@ -315,9 +313,9 @@ class _PairItemState extends State<_PairItem> {
           controller: controller,
           decoration: InputDecoration(
             labelText: '코드',
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
             suffixIcon: IconButton(
-              constraints: BoxConstraints(),
+              constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
               onPressed: _updateCode,
               splashRadius: 20.0,

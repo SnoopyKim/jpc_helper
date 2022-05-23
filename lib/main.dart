@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:jpc_second/firebase_options.dart';
 
 import 'screens/admin.dart';
@@ -8,6 +9,7 @@ import 'screens/second_present.dart';
 import 'screens/welcome.dart';
 
 void main() {
+  setUrlStrategy(PathUrlStrategy());
   runApp(const MyApp());
 }
 
@@ -19,7 +21,8 @@ class MyApp extends StatelessWidget {
     return FutureBuilder(
       future: Firebase.initializeApp(options: DefaultFirebaseOptions.web),
       builder: (context, snapshot) {
-        return (snapshot.connectionState == ConnectionState.done && snapshot.hasData)
+        return (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData)
             ? MaterialApp(
                 title: 'JPC HELPER',
                 debugShowCheckedModeBanner: false,
@@ -29,15 +32,15 @@ class MyApp extends StatelessWidget {
                 ),
                 initialRoute: '/',
                 routes: {
-                  '/': (context) => WelcomeScreen(),
-                  '/admin': (context) => AdminScreen(),
-                  '/second': (context) => SecondScreen(),
-                  '/second/present': (context) => SecondPresentScreen(),
+                  '/': (context) => const WelcomeScreen(),
+                  '/admin': (context) => const AdminScreen(),
+                  '/second': (context) => const SecondScreen(),
+                  '/second/present': (context) => const SecondPresentScreen(),
                 },
               )
             : Center(
                 child: SizedBox.fromSize(
-                    size: Size(100, 100),
+                    size: const Size(100, 100),
                     child: const CircularProgressIndicator(
                       color: Colors.amber,
                     )));
