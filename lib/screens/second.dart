@@ -34,7 +34,7 @@ class _SecondScreenState extends State<SecondScreen> {
               textScaleFactor: 1.0,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 30.0),
             TextField(
               decoration: InputDecoration(
                   labelText: '전화번호(\'-\' 없이 입력하세요)',
@@ -48,10 +48,13 @@ class _SecondScreenState extends State<SecondScreen> {
               }),
               onSubmitted: (_) => goNext(),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 30.0),
             TextButton(
               style: TextButton.styleFrom(
-                  primary: Colors.white, backgroundColor: Color(0xFF172E63)),
+                  padding: const EdgeInsets.all(20.0),
+                  textStyle: const TextStyle(fontSize: 20),
+                  primary: Colors.white,
+                  backgroundColor: Color(0xFF172E63)),
               onPressed: () => goNext(),
               child: Text('NEXT'),
             )
