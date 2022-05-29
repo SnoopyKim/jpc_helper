@@ -31,6 +31,7 @@ class SecondPresentScreen extends StatelessWidget {
             children: [
               Text(
                 '경품 추첨 코드',
+                textScaleFactor: 1.0,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     height: 1.2,
@@ -42,6 +43,7 @@ class SecondPresentScreen extends StatelessWidget {
               ),
               Text(
                 '54',
+                textScaleFactor: 1.0,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     height: 1.2,
@@ -62,12 +64,14 @@ class SecondPresentScreen extends StatelessWidget {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title,
+                  textScaleFactor: 1.0,
                   style: TextStyle(
                       height: 1.2,
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                       color: Color(0xFF172E63))),
               Text(desc,
+                  textScaleFactor: 1.0,
                   style: TextStyle(
                     height: 1.2,
                     fontWeight: FontWeight.normal,
@@ -105,6 +109,7 @@ class SecondPresentScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '혹시 당근?',
+                  textScaleFactor: 1.0,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
@@ -132,6 +137,7 @@ class SecondPresentScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '술톤 개구리',
+                  textScaleFactor: 1.0,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
