@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class SecondPresentScreen extends StatefulWidget {
@@ -11,8 +12,13 @@ class SecondPresentScreen extends StatefulWidget {
 
 class _SecondPresentScreenState extends State<SecondPresentScreen> {
   Future getDataFromPhone(String phone) async {
-    await Future.delayed(Duration(milliseconds: 500));
-    return phone;
+    final result = await FirebaseDatabase.instance
+        .ref('jpc/second/present')
+        .orderByChild('one')
+        .equalTo(phone)
+        .once();
+    log("Result  ${result.snapshot.children.first.value}");
+    return result.snapshot.children.first.value;
   }
 
   Widget presentCode() {
@@ -76,6 +82,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
   }
 
   Widget _buildResultPage(Object? data) {
+    final map = data as Map<String, dynamic>;
     return Container(
       height: double.infinity,
       constraints: const BoxConstraints(maxWidth: 500),
@@ -83,7 +90,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(children: [
           presentCode(),
-          title('KEYWORD', '당신과 같은 키워드를 가진 사람을 찾아, 선물을 교환하세요!'),
+          title('KEYWORD', '당신과 같은 키워드를 가진 파트너를 찾아, 선물을 교환하세요!'),
           Container(
               height: 100,
               alignment: Alignment.center,
@@ -97,8 +104,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                         offset: const Offset(3, 3))
                   ],
                   borderRadius: BorderRadius.circular(10)),
-              child: const Text(
-                '혹시 당근?',
+              child: Text(
+                '${data['code']}',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
@@ -120,8 +127,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   ],
                   border: Border.all(color: const Color(0xFF172E63), width: 2),
                   borderRadius: BorderRadius.circular(10)),
-              child: const Text(
-                '술톤 개구리',
+              child: Text(
+                '${data['twoHint']}',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -174,15 +181,16 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
             ? FutureBuilder(
                 future: getDataFromPhone(phone),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const CircularProgressIndicator();
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      snapshot.hasData) {
+                    return _buildResultPage(snapshot.data);
                   }
 
-                  if (snapshot.hasError || false) {
+                  if (snapshot.hasError || snapshot.data == null) {
                     return _buildErrorPage();
                   }
 
-                  return _buildResultPage(snapshot.data);
+                  return const CircularProgressIndicator();
                 })
             : _buildErrorPage(),
       ),
