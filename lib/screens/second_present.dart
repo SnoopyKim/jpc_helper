@@ -181,12 +181,13 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
             ? FutureBuilder(
                 future: getDataFromPhone(phone),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.hasData) {
-                    return _buildResultPage(snapshot.data);
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return snapshot.hasData
+                        ? _buildResultPage(snapshot.data)
+                        : _buildErrorPage();
                   }
 
-                  if (snapshot.hasError || snapshot.data == null) {
+                  if (snapshot.hasError) {
                     return _buildErrorPage();
                   }
 
