@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(
                   useMaterial3: true,
-                  colorSchemeSeed: Colors.amber,
+                  colorSchemeSeed: Color(0xFF172E63),
                 ),
                 initialRoute: '/',
                 routes: {
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
                 child: SizedBox.fromSize(
                     size: const Size(100, 100),
                     child: const CircularProgressIndicator(
-                      color: Colors.amber,
+                      color: Color(0xFF172E63),
                     )));
       },
     );
