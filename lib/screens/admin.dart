@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:jpc_second/data/member.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   final String _adminPassword = 'ckwodnjs';
-  bool _isAdmin = false;
+  bool _isAdmin = true;
   String _input = '';
 
   login() {
@@ -26,8 +27,7 @@ class _AdminScreenState extends State<AdminScreen> {
         content: const Text('비밀번호가 일치하지 않습니다.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.red.shade700,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       ));
     }
   }
@@ -36,47 +36,49 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 500),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: AnimatedSwitcher(
+        child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _isAdmin
-                ? const EditContainer()
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'ADMIN',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 20.0),
-                      TextField(
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                            labelText: '비밀번호',
-                            hintText: '비밀번호를 입력하세요.',
-                            hintStyle: TextStyle(
-                              height: 2.0,
-                            ),
-                            contentPadding: EdgeInsets.all(10.0)),
-                        onChanged: (value) => setState(() {
-                          _input = value;
-                        }),
-                        onSubmitted: (_) => login(),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 16.0),
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: login,
-                          child: const Text('확인'),
+                ? Container(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    padding: const EdgeInsets.all(30.0),
+                    child: const EditContainer())
+                : Container(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'ADMIN',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                      )
-                    ],
-                  ),
-          ),
-        ),
+                        const SizedBox(height: 20.0),
+                        TextField(
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                              labelText: '비밀번호',
+                              hintText: '비밀번호를 입력하세요.',
+                              hintStyle: TextStyle(
+                                height: 2.0,
+                              ),
+                              contentPadding: EdgeInsets.all(10.0)),
+                          onChanged: (value) => setState(() {
+                            _input = value;
+                          }),
+                          onSubmitted: (_) => login(),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 16.0),
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: login,
+                            child: const Text('확인'),
+                          ),
+                        )
+                      ],
+                    ),
+                  )),
       ),
     );
   }
@@ -90,245 +92,338 @@ class EditContainer extends StatefulWidget {
 }
 
 class EditContainerState extends State<EditContainer> {
-  final DatabaseReference _database =
-      FirebaseDatabase.instance.ref('jpc/second/present');
-  late StreamSubscription<DatabaseEvent> addedSubscription;
+  final DatabaseReference _database = FirebaseDatabase.instance.ref('jpc/second');
   late StreamSubscription<DatabaseEvent> changedSubscription;
-  late StreamSubscription<DatabaseEvent> removedSubscription;
+
+  ScrollController manSC = ScrollController();
+  ScrollController womanSC = ScrollController();
+  ScrollController pairSC = ScrollController();
 
   TextEditingController phoneOneTec = TextEditingController();
   TextEditingController phoneTwoTec = TextEditingController();
   TextEditingController codeTec = TextEditingController();
 
-  List<Map<dynamic, dynamic>> pairList = [];
+  List<Member> userList = [];
+  List<Map<String, dynamic>> pairList = [];
+  int? selectedPairIdx;
 
   @override
   void initState() {
-    addedSubscription = _database.onChildAdded.listen((event) {
-      // log(event.type.toString());
-      // log(event.snapshot.value.toString());
-      // log(event.snapshot.runtimeType.toString());
-
-      pairList.add((event.snapshot.value as Map)..['key'] = event.snapshot.key);
-      // pairList.last.addAll(<dynamic, dynamic>{'key': event.snapshot.key});
-      // ..addAll({'key': event.snapshot.key}));
-      setState(() {});
-    }, onError: (err) => log('ERROR! $err'));
-    changedSubscription = _database.onChildChanged.listen((event) {
-      log(event.type.toString());
-      final Map data = (event.snapshot.value as Map)
-        ..['key'] = event.snapshot.key;
-      log(data.toString());
-      int idx = pairList.indexWhere((pair) => pair['key'] == data['key']);
-      pairList.replaceRange(idx, idx + 1, [data]);
-      setState(() {});
-    }, onError: (err) => log('ERROR! $err'));
-    removedSubscription = _database.onChildRemoved.listen((event) {
-      log(event.type.toString());
-      log(event.snapshot.value.toString());
-      int idx =
-          pairList.indexWhere((pair) => pair['key'] == event.snapshot.key);
-      pairList.removeAt(idx);
-      setState(() {});
+    init();
+    changedSubscription = _database.child('members').onChildChanged.listen((event) {
+      final member =
+          Member.fromFirebase(event.snapshot.key.toString(), event.snapshot.value as Map);
+      if (event.type == DatabaseEventType.childChanged) {
+        updateUserList(member);
+        removeMemberFromPair(member);
+      }
+      final idx = pairList.indexWhere((pair) => pair['code'] == member.code);
+      if (idx != -1) {
+        addMemberToPair(idx, member);
+      }
     }, onError: (err) => log('ERROR! $err'));
     super.initState();
+  }
+
+  init() async {
+    final codes = await _database.child('codes').get();
+    for (var code in codes.children) {
+      final map = {'code': code.value.toString(), 'one': '{}', 'two': '{}'};
+      pairList.add(map);
+    }
+
+    final users = await _database.child("members").get();
+    for (var m in users.children) {
+      final member = Member.fromFirebase(m.key.toString(), m.value as Map);
+      if (member.code.isNotEmpty) {
+        final idx = pairList.indexWhere((pair) => pair['code'] == member.code);
+        addMemberToPair(idx, member);
+      }
+      userList.add(member);
+    }
+    setState(() {});
   }
 
   @override
   void dispose() {
     super.dispose();
-    addedSubscription.cancel();
     changedSubscription.cancel();
-    removedSubscription.cancel();
+
+    phoneOneTec.dispose();
+    phoneTwoTec.dispose();
+    codeTec.dispose();
+
+    manSC.dispose();
+    womanSC.dispose();
+    pairSC.dispose();
   }
 
-  addPair() async {
-    if (phoneOneTec.text.isEmpty || phoneTwoTec.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('두 번호는 필수로 입력해야 합니다.'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.red.shade700,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-      ));
-      return;
+  updateUserList(Member member) {
+    final idx = userList.indexWhere((m) => m.key == member.key);
+    if (idx != -1) {
+      userList[idx] = member;
+      setState(() {});
     }
-    final newChild = _database.push();
-    await newChild.set({
-      'one': phoneOneTec.text,
-      'two': phoneTwoTec.text,
-      'code': codeTec.text,
+  }
+
+  addCodeToMember(String key) {
+    if (selectedPairIdx == null ||
+        (pairList[selectedPairIdx!]['one'] != '{}' && pairList[selectedPairIdx!]['two'] != '{}'))
+      return;
+    String code = pairList[selectedPairIdx!]['code'];
+    _database.child('members/$key').update({'code': code});
+  }
+
+  addMemberToPair(int idx, Member member) {
+    if (pairList[idx]['one'] == '{}') {
+      pairList[idx]['one'] = member.toJson();
+    } else if (pairList[idx]['two'] == '{}') {
+      pairList[idx]['two'] = member.toJson();
+    }
+    setState(() {});
+  }
+
+  removeMemberFromPair(Member member) {
+    String result = '';
+    int idx = pairList.indexWhere((pair) {
+      if (pair['one'] != null && Member.fromJson(pair['one']).key == member.key) {
+        result = 'one';
+        return true;
+      }
+      if (pair['two'] != null && Member.fromJson(pair['two']).key == member.key) {
+        result = 'two';
+        return true;
+      }
+      return false;
     });
-    phoneOneTec.clear();
-    phoneTwoTec.clear();
-    codeTec.clear();
+    if (idx != -1) {
+      pairList[idx][result] = '{}';
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final manList = userList.where((e) => (e.gender == '남자') && (e.code.isEmpty)).toList();
+    final womanList = userList.where((e) => e.gender == '여자' && e.code.isEmpty).toList();
+    return Row(
       children: [
-        Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20.0),
-              border: Border.all(color: Theme.of(context).primaryColor)),
-          padding: const EdgeInsets.all(20.0),
-          margin: const EdgeInsets.symmetric(vertical: 20.0),
+        SizedBox(
+          width: 200,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: phoneOneTec,
-                decoration: const InputDecoration(
-                    labelText: '휴대폰번호1 *',
-                    hintText: '',
-                    hintStyle: const TextStyle(height: 2.0),
-                    contentPadding: const EdgeInsets.all(10.0)),
+              Text('남자 참가자'),
+              Expanded(
+                child: Scrollbar(
+                  controller: manSC,
+                  interactive: true,
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    controller: manSC,
+                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                    itemBuilder: (_, idx) {
+                      final man = manList[idx];
+                      return _MemberItem(
+                        man.name,
+                        man.phone,
+                        onSelect: selectedPairIdx != null ? () => addCodeToMember(man.key) : null,
+                      );
+                    },
+                    itemCount: manList.length,
+                  ),
+                ),
               ),
-              TextField(
-                controller: phoneTwoTec,
-                decoration: const InputDecoration(
-                    labelText: '휴대폰번호2 *',
-                    hintText: '',
-                    hintStyle: const TextStyle(height: 2.0),
-                    contentPadding: const EdgeInsets.all(10.0)),
-              ),
-              TextField(
-                controller: codeTec,
-                decoration: const InputDecoration(
-                    labelText: '코드',
-                    hintText: '',
-                    hintStyle: const TextStyle(height: 2.0),
-                    contentPadding: const EdgeInsets.all(10.0)),
-              ),
-              const SizedBox(height: 20.0),
-              ElevatedButton(onPressed: addPair, child: const Text('추가하기')),
             ],
           ),
         ),
-        Text(
-          '현재 입력된 짝궁 수 : ${pairList.length}쌍',
-          style: Theme.of(context).textTheme.titleMedium,
+        SizedBox(
+          width: 200,
+          child: Scrollbar(
+            controller: womanSC,
+            child: Column(
+              children: [
+                Text('여자 참가자'),
+                Expanded(
+                  child: ListView.builder(
+                    controller: womanSC,
+                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                    itemBuilder: (_, idx) {
+                      final woman = womanList[idx];
+                      return _MemberItem(
+                        woman.name,
+                        woman.phone,
+                        onSelect: selectedPairIdx != null ? () => addCodeToMember(woman.key) : null,
+                      );
+                    },
+                    itemCount: womanList.length,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            itemBuilder: (_, idx) {
-              return _PairItem(pairList[idx]);
-            },
-            itemCount: pairList.length,
-          ),
+          child: Column(children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('짝'),
+                Visibility(
+                    visible: selectedPairIdx != null,
+                    child: IconButton(
+                        icon: Icon(Icons.edit_off_rounded, color: Theme.of(context).primaryColor),
+                        onPressed: () => setState(
+                              () {
+                                selectedPairIdx = null;
+                              },
+                            )))
+              ],
+            ),
+            Expanded(
+              child: Scrollbar(
+                controller: pairSC,
+                child: ListView.builder(
+                  controller: pairSC,
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  itemBuilder: (_, idx) {
+                    final pair = pairList[idx];
+                    return GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => setState(() {
+                              selectedPairIdx = idx;
+                            }),
+                        child: _PairItem(
+                            isSelected: selectedPairIdx == idx,
+                            one: Member.fromJson(pair['one'] ?? "{}"),
+                            two: Member.fromJson(pair['two'] ?? "{}"),
+                            code: pair['code']));
+                  },
+                  itemCount: pairList.length,
+                ),
+              ),
+            ),
+          ]),
         )
       ],
     );
   }
 }
 
-class _PairItem extends StatefulWidget {
-  const _PairItem(this.pair, {Key? key}) : super(key: key);
-  final Map<dynamic, dynamic> pair;
-
-  @override
-  State<_PairItem> createState() => _PairItemState();
-}
-
-class _PairItemState extends State<_PairItem> {
-  late TextEditingController controller;
-
-  @override
-  void initState() {
-    controller = TextEditingController(text: widget.pair['code']);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  _updateCode() {
-    String inputText = controller.text;
-    if (inputText.isEmpty || inputText == widget.pair['code']) return;
-
-    FirebaseDatabase.instance
-        .ref('jpc/second/present/${widget.pair['key']}')
-        .update({'code': inputText});
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text('코드가 수정되었습니다'),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Theme.of(context).primaryColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-    ));
-    FocusScope.of(context).unfocus();
-  }
-
-  _removePair() async {
-    await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              content: const Text('삭제하시겠습니까?'),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      FirebaseDatabase.instance
-                          .ref('jpc/second/present/${widget.pair['key']}')
-                          .remove();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('네')),
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('아니오'))
-              ],
-            ));
-  }
+class _MemberItem extends StatelessWidget {
+  const _MemberItem(this.name, this.phone, {Key? key, this.onSelect}) : super(key: key);
+  final String name;
+  final String phone;
+  final Function()? onSelect;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Row(
+      title: Text(name),
+      subtitle: Text(phone),
+      trailing: IconButton(
+        icon: Icon(Icons.send_rounded),
+        onPressed: onSelect,
+        color: Theme.of(context).primaryColor,
+      ),
+    );
+  }
+}
+
+class _PairItem extends StatelessWidget {
+  const _PairItem({Key? key, this.isSelected = false, this.one, this.two, required this.code})
+      : super(key: key);
+
+  final isSelected;
+  final Member? one, two;
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.0),
+          border:
+              Border.all(color: isSelected ? Theme.of(context).primaryColor : Colors.transparent)),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${widget.pair['one']}'),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.0),
-            child: Text('⇋'),
+          Text(
+            code,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
           ),
-          Text('${widget.pair['two']}'),
-          const Spacer(),
-          IconButton(
-            onPressed: _removePair,
-            splashRadius: 26.0,
-            icon: Icon(
-              Icons.delete,
-              size: 26.0,
-              color: Colors.red.shade700,
-            ),
+          const SizedBox(height: 4.0),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      '멤버1',
+                      textAlign: TextAlign.center,
+                    ),
+                    one?.key != ""
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Column(
+                                children: [
+                                  Text('${one!.name} | ${one!.gender}'),
+                                  Text(one!.phone),
+                                ],
+                              ),
+                              IconButton(
+                                  onPressed: () {
+                                    FirebaseDatabase.instance
+                                        .ref('jpc/second/members/${one!.key}/code')
+                                        .set(null);
+                                  },
+                                  icon: Icon(
+                                    Icons.delete_rounded,
+                                    color: Theme.of(context).primaryColor,
+                                  ))
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ],
+                ),
+              ),
+              Expanded(
+                  child: Column(
+                children: [
+                  Text(
+                    '멤버2',
+                    textAlign: TextAlign.center,
+                  ),
+                  two?.key != ""
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Column(
+                              children: [
+                                Text('${two!.name} | ${two!.gender}'),
+                                Text(two!.phone),
+                              ],
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  FirebaseDatabase.instance
+                                      .ref('jpc/second/members/${two!.key}/code')
+                                      .set(null);
+                                },
+                                icon: Icon(
+                                  Icons.delete_rounded,
+                                  color: Theme.of(context).primaryColor,
+                                ))
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ],
+              ))
+            ],
           )
         ],
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
-        child: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: '코드',
-            border: const OutlineInputBorder(),
-            suffixIcon: IconButton(
-              constraints: const BoxConstraints(),
-              padding: EdgeInsets.zero,
-              onPressed: _updateCode,
-              splashRadius: 20.0,
-              icon: Icon(
-                Icons.edit,
-                size: 24.0,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-          maxLines: 1,
-          textAlignVertical: TextAlignVertical.center,
-        ),
       ),
     );
   }

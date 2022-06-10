@@ -11,17 +11,28 @@ class SecondPresentScreen extends StatefulWidget {
 }
 
 class _SecondPresentScreenState extends State<SecondPresentScreen> {
-  Future getDataFromPhone(String phone) async {
+  Future<Map<String, dynamic>> getDataFromPhone(String phone) async {
     final result = await FirebaseDatabase.instance
-        .ref('jpc/second/present')
-        .orderByChild('one')
+        .ref('jpc/second/members')
+        .orderByChild('phone')
         .equalTo(phone)
-        .once();
-    log("Result  ${result.snapshot.children.first.value}");
-    return result.snapshot.children.first.value;
+        .get();
+    final userData = result.children.first.value as Map<String, dynamic>;
+    userData['key'] = result.children.first.key;
+    if (userData['code'] != null) {
+      final pairData = (await FirebaseDatabase.instance
+              .ref('jpc/second/members')
+              .orderByChild('code')
+              .equalTo(userData['code'])
+              .get())
+          .children
+          .where((data) => data.key != userData['key']);
+      userData['pairHint'] = (pairData.first.value as Map<String, dynamic>)['hint'];
+    }
+    return userData;
   }
 
-  Widget presentCode() {
+  Widget presentCode(String value) {
     return Container(
         height: 150,
         width: 150,
@@ -40,17 +51,15 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Text(
                 '경품 추첨 코드',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Color(0xFF172E63)),
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF172E63)),
               ),
               Text(
-                '54',
+                '$value',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     height: 1.2,
@@ -67,9 +76,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Color(0xFF172E63))),
+                  fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF172E63))),
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(desc,
@@ -81,15 +88,14 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         ]));
   }
 
-  Widget _buildResultPage(Object? data) {
-    final map = data as Map<String, dynamic>;
+  Widget _buildResultPage(Map<String, dynamic> data) {
     return Container(
       height: double.infinity,
       constraints: const BoxConstraints(maxWidth: 500),
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(children: [
-          presentCode(),
+          presentCode(data['key']),
           title('KEYWORD', '당신과 같은 키워드를 가진 파트너를 찾아, 선물을 교환하세요!'),
           Container(
               height: 100,
@@ -105,11 +111,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   ],
                   borderRadius: BorderRadius.circular(10)),
               child: Text(
-                '${data['code']}',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.white),
+                '${data['code'] ?? '-'}',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.white),
               )),
           const SizedBox(height: 20),
           title('HINT', '파트너를 알아볼 수 있는 특징은?'),
@@ -128,11 +131,9 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   border: Border.all(color: const Color(0xFF172E63), width: 2),
                   borderRadius: BorderRadius.circular(10)),
               child: Text(
-                '${data['twoHint']}',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Color(0xFF172E63)),
+                '${data['pairHint'] ?? '-'}',
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF172E63)),
               )),
         ]),
       ),
@@ -178,13 +179,11 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
       ),
       body: Center(
         child: phone.isNotEmpty
-            ? FutureBuilder(
+            ? FutureBuilder<Map<String, dynamic>>(
                 future: getDataFromPhone(phone),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
-                    return snapshot.hasData
-                        ? _buildResultPage(snapshot.data)
-                        : _buildErrorPage();
+                    return snapshot.hasData ? _buildResultPage(snapshot.data!) : _buildErrorPage();
                   }
 
                   if (snapshot.hasError) {
