@@ -24,6 +24,12 @@ class MyApp extends StatelessWidget {
         return (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData)
             ? MaterialApp(
+                builder: (context, child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1),
+                    child: child!,
+                  );
+                },
                 title: 'JPC HELPER',
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(

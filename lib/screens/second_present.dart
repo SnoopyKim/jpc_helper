@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:developer';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -11,6 +13,11 @@ class SecondPresentScreen extends StatefulWidget {
 }
 
 class _SecondPresentScreenState extends State<SecondPresentScreen> {
+  final List<String> _checkinList = [
+    '아직 파티에 도착하지 않았어요ㅠㅠ\n(hasn\'t arrived at the party yet.)',
+    '파티에 도착해있어요\n(already arrived at the party)'
+  ];
+  int checkInIdx = 0;
   Future<Map<String, dynamic>> getDataFromPhone(String phone) async {
     final result = await FirebaseDatabase.instance
         .ref('jpc/second/members')
@@ -27,7 +34,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
               .get())
           .children
           .where((data) => data.key != userData['key']);
-      userData['pairHint'] = (pairData.first.value as Map<String, dynamic>)['hint'];
+      userData['pairHint'] =
+          (pairData.first.value as Map<String, dynamic>)['hint'];
     }
     return userData;
   }
@@ -53,10 +61,12 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                '경품 추첨 코드',
+                'PRIZE CODE',
                 textAlign: TextAlign.center,
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF172E63)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFF172E63)),
               ),
               Text(
                 '$value',
@@ -76,7 +86,9 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF172E63))),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xFF172E63))),
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(desc,
@@ -96,7 +108,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(children: [
           presentCode(data['key']),
-          title('KEYWORD', '당신과 같은 키워드를 가진 파트너를 찾아, 선물을 교환하세요!'),
+          title('SECRET CODE',
+              '같은 시크릿코드를 가진 파트너를 찾아, 선물을 교환하세요!\n(Find a partner who has the same secret code as you and exchange gifts!)'),
           Container(
               height: 100,
               alignment: Alignment.center,
@@ -112,10 +125,50 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   borderRadius: BorderRadius.circular(10)),
               child: Text(
                 '${data['code'] ?? '-'}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.white),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: Colors.white),
               )),
           const SizedBox(height: 20),
-          title('HINT', '파트너를 알아볼 수 있는 특징은?'),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Text("당신의 파트너는 지금?\n(Your partner..)",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        height: 1.2,
+                        color: Color(0xFF172E63))),
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Color(0xFF172E63),
+                      onPrimary: Theme.of(context).colorScheme.onPrimary,
+                      alignment: Alignment.center,
+                      minimumSize: Size.zero, // default padding 제거
+                      padding: EdgeInsets.fromLTRB(10, 13, 10, 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () => reload(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text('RELOAD', style: TextStyle(fontSize: 10)),
+                        const SizedBox(width: 5),
+                        Image.asset(
+                          'assets/images/reload.png',
+                          width: 10,
+                          height: 10,
+                        ),
+                      ],
+                    ))
+              ]),
+          const SizedBox(height: 8),
           Container(
               height: 60,
               alignment: Alignment.center,
@@ -131,10 +184,37 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   border: Border.all(color: const Color(0xFF172E63), width: 2),
                   borderRadius: BorderRadius.circular(10)),
               child: Text(
-                '${data['pairHint'] ?? '-'}',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF172E63)),
+                _checkinList[checkInIdx],
+                style: TextStyle(fontSize: 13, color: Color(0xFF172E63)),
               )),
+          const SizedBox(height: 20),
+          title('PARTNER HINT',
+              '파트너를 알아볼 수 있는 특징은? \n(the hint for you to recognize your partner)'),
+          Container(
+              height: 80,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                        color: const Color(0xFF172E63).withOpacity(0.4),
+                        spreadRadius: 2,
+                        blurRadius: 6,
+                        offset: const Offset(3, 3))
+                  ],
+                  border: Border.all(color: const Color(0xFF172E63), width: 2),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Text(
+                    // '${data['pairHint'] ?? '-'}',
+                    "I was the one who taught josh how to drink alcohol",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF172E63)),
+                  ))),
+          const SizedBox(height: 20),
         ]),
       ),
     );
@@ -151,7 +231,10 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         ),
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 20.0),
-          child: Text('해당 번호로 등록된 멤버가 없습니다'),
+          child: Text(
+              '해당 번호로 등록된 멤버가 없습니다.\nNo matching member found. \nPlease check if it is the correct number.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold)),
         ),
         ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -159,9 +242,16 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
               onPrimary: Theme.of(context).colorScheme.onPrimary,
             ),
             onPressed: () => Navigator.pop(context),
-            child: const Text('뒤로가기')),
+            child: const Text('BACK')),
       ],
     );
+  }
+
+  reload() {
+    //새로고침 동작
+    setState(() {
+      checkInIdx = (checkInIdx - 1).abs();
+    });
   }
 
   @override
@@ -183,7 +273,9 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                 future: getDataFromPhone(phone),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
-                    return snapshot.hasData ? _buildResultPage(snapshot.data!) : _buildErrorPage();
+                    return snapshot.hasData
+                        ? _buildResultPage(snapshot.data!)
+                        : _buildErrorPage();
                   }
 
                   if (snapshot.hasError) {
