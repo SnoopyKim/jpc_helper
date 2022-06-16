@@ -52,8 +52,7 @@ class _SecondScreenState extends State<SecondScreen> {
                 decoration: const InputDecoration(
                     labelText: "전화번호('-' 없이 입력하세요)",
                     hintText: '01012345678',
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0)),
                 validator: phoneValidator,
                 onFieldSubmitted: (input) => goNext(input),
                 onSaved: (input) => goNext(input ?? ''),

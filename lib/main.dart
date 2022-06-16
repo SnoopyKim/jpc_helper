@@ -21,8 +21,7 @@ class MyApp extends StatelessWidget {
     return FutureBuilder(
       future: Firebase.initializeApp(options: DefaultFirebaseOptions.web),
       builder: (context, snapshot) {
-        return (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData)
+        return (snapshot.connectionState == ConnectionState.done && snapshot.hasData)
             ? MaterialApp(
                 builder: (context, child) {
                   return MediaQuery(

@@ -10,18 +10,18 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'WELCOME',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/admin'),
-              child: Text('Admin'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/second'),
-              child: Text('Second'),
-            ),
+            // Text(
+            //   'WELCOME',
+            //   style: Theme.of(context).textTheme.titleLarge,
+            // ),
+            // TextButton(
+            //   onPressed: () => Navigator.pushNamed(context, '/admin'),
+            //   child: Text('Admin'),
+            // ),
+            // TextButton(
+            //   onPressed: () => Navigator.pushNamed(context, '/second'),
+            //   child: Text('Second'),
+            // ),
           ],
         ),
       ),

@@ -13,11 +13,6 @@ class SecondPresentScreen extends StatefulWidget {
 }
 
 class _SecondPresentScreenState extends State<SecondPresentScreen> {
-  final List<String> _checkinList = [
-    '아직 파티에 도착하지 않았어요ㅠㅠ\n(hasn\'t arrived at the party yet.)',
-    '파티에 도착해있어요\n(already arrived at the party)'
-  ];
-  int checkInIdx = 0;
   Future<Map<String, dynamic>> getDataFromPhone(String phone) async {
     final result = await FirebaseDatabase.instance
         .ref('jpc/second/members')
@@ -27,6 +22,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
     final userData = result.children.first.value as Map<String, dynamic>;
     userData['key'] = result.children.first.key;
     if (userData['code'] != null) {
+      FirebaseDatabase.instance.ref('jpc/second/members/${userData['key']}/entered').set(true);
       final pairData = (await FirebaseDatabase.instance
               .ref('jpc/second/members')
               .orderByChild('code')
@@ -34,8 +30,13 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
               .get())
           .children
           .where((data) => data.key != userData['key']);
-      userData['pairHint'] =
-          (pairData.first.value as Map<String, dynamic>)['hint'];
+      userData['pairKey'] = pairData.first.key;
+      userData['pairHint'] = (pairData.first.value as Map<String, dynamic>)['hint'];
+    }
+    if (userData['key'] == '68') {
+      userData['code'] = "안락삶시켜줘요";
+      userData['pairKey'] = "24";
+      userData['pairHint'] = "스누피 닮음!";
     }
     return userData;
   }
@@ -63,10 +64,8 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
               Text(
                 'PRIZE CODE',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Color(0xFF172E63)),
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF172E63)),
               ),
               Text(
                 '$value',
@@ -86,9 +85,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Color(0xFF172E63))),
+                  fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF172E63))),
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(desc,
@@ -125,71 +122,13 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                   borderRadius: BorderRadius.circular(10)),
               child: Text(
                 '${data['code'] ?? '-'}',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.white),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.white),
               )),
           const SizedBox(height: 20),
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Text("당신의 파트너는 지금?\n(Your partner..)",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        height: 1.2,
-                        color: Color(0xFF172E63))),
-                ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      primary: Color(0xFF172E63),
-                      onPrimary: Theme.of(context).colorScheme.onPrimary,
-                      alignment: Alignment.center,
-                      minimumSize: Size.zero, // default padding 제거
-                      padding: EdgeInsets.fromLTRB(10, 13, 10, 13),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
-                    ),
-                    onPressed: () => reload(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text('RELOAD', style: TextStyle(fontSize: 10)),
-                        const SizedBox(width: 5),
-                        Image.asset(
-                          'assets/images/reload.png',
-                          width: 10,
-                          height: 10,
-                        ),
-                      ],
-                    ))
-              ]),
-          const SizedBox(height: 8),
-          Container(
-              height: 60,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                        color: const Color(0xFF172E63).withOpacity(0.4),
-                        spreadRadius: 2,
-                        blurRadius: 6,
-                        offset: const Offset(3, 3))
-                  ],
-                  border: Border.all(color: const Color(0xFF172E63), width: 2),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Text(
-                _checkinList[checkInIdx],
-                style: TextStyle(fontSize: 13, color: Color(0xFF172E63)),
-              )),
+          CheckPartner(partnerKey: data['pairKey']),
           const SizedBox(height: 20),
-          title('PARTNER HINT',
-              '파트너를 알아볼 수 있는 특징은? \n(the hint for you to recognize your partner)'),
+          title(
+              'PARTNER HINT', '파트너를 알아볼 수 있는 특징은? \n(the hint for you to recognize your partner)'),
           Container(
               height: 80,
               alignment: Alignment.center,
@@ -207,12 +146,9 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
               child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    // '${data['pairHint'] ?? '-'}',
-                    "I was the one who taught josh how to drink alcohol",
+                    '${data['pairHint'] ?? '-'}',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF172E63)),
+                        fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF172E63)),
                   ))),
           const SizedBox(height: 20),
         ]),
@@ -247,13 +183,6 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
     );
   }
 
-  reload() {
-    //새로고침 동작
-    setState(() {
-      checkInIdx = (checkInIdx - 1).abs();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     String phone = (ModalRoute.of(context)?.settings.arguments ?? '') as String;
@@ -273,9 +202,7 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                 future: getDataFromPhone(phone),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
-                    return snapshot.hasData
-                        ? _buildResultPage(snapshot.data!)
-                        : _buildErrorPage();
+                    return snapshot.hasData ? _buildResultPage(snapshot.data!) : _buildErrorPage();
                   }
 
                   if (snapshot.hasError) {
@@ -286,6 +213,99 @@ class _SecondPresentScreenState extends State<SecondPresentScreen> {
                 })
             : _buildErrorPage(),
       ),
+    );
+  }
+}
+
+class CheckPartner extends StatefulWidget {
+  CheckPartner({Key? key, required this.partnerKey}) : super(key: key);
+  final String partnerKey;
+
+  @override
+  State<CheckPartner> createState() => _CheckPartnerState();
+}
+
+class _CheckPartnerState extends State<CheckPartner> {
+  bool isCheckIn = false;
+  final String notCheckinTxt = '아직 파티에 도착하지 않았어요ㅠㅠ\n(hasn\'t arrived at the party yet.)';
+  final String checkInTxt = '파티에 도착해있어요!\n(already arrived at the party!)';
+
+  @override
+  void initState() {
+    super.initState();
+    reload();
+  }
+
+  reload() async {
+    final snapshot =
+        await FirebaseDatabase.instance.ref('jpc/second/members/${widget.partnerKey}').get();
+    final isEntered = (snapshot.value as Map<String, dynamic>)['entered'];
+    setState(() {
+      isCheckIn = isEntered ?? false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text("당신의 파트너는 지금?\n(Your partner..)",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      height: 1.2,
+                      color: Color(0xFF172E63))),
+              ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Color(0xFF172E63),
+                    onPrimary: Theme.of(context).colorScheme.onPrimary,
+                    alignment: Alignment.center,
+                    minimumSize: Size.zero, // default padding 제거
+                    padding: EdgeInsets.fromLTRB(10, 13, 10, 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  onPressed: () => reload(),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text('RELOAD', style: TextStyle(fontSize: 10)),
+                      const SizedBox(width: 5),
+                      Image.asset(
+                        'assets/images/reload.png',
+                        width: 10,
+                        height: 10,
+                      ),
+                    ],
+                  ))
+            ]),
+        const SizedBox(height: 8),
+        Container(
+            height: 60,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                      color: const Color(0xFF172E63).withOpacity(0.4),
+                      spreadRadius: 2,
+                      blurRadius: 6,
+                      offset: const Offset(3, 3))
+                ],
+                border: Border.all(color: const Color(0xFF172E63), width: 2),
+                borderRadius: BorderRadius.circular(10)),
+            child: Text(
+              isCheckIn ? checkInTxt : notCheckinTxt,
+              style: TextStyle(fontSize: 13, color: Color(0xFF172E63)),
+            )),
+      ],
     );
   }
 }
